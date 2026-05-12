@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(PHARMACIST)
+  createdAt DateTime @default(now())
+  sales     Sale[]
+}
+
+enum Role {
+  ADMIN
+  PHARMACIST
+  DENTIST
+}
+
+enum Currency {
+  USD
+  KHR
+}
+
+model Medicine {
+  id         Int        @id @default(autoincrement())
+  name       String
+  brand      String?
+  unit       String
+  costPrice  Float
+  sellPrice  Float
+  stock      Int        @default(0)
+  expiryDate DateTime?
+  lowStockAt Int        @default(10)
+  createdAt  DateTime   @default(now())
+  saleItems  SaleItem[]
+  restocks   Restock[]
+}
+
+model Sale {
+  id          Int        @id @default(autoincrement())
+  totalAmount Float
+  currency    Currency   @default(USD)
+  note        String?
+  createdAt   DateTime   @default(now())
+  userId      Int
+  soldBy      User       @relation(fields: [userId], references: [id])
+  items       SaleItem[]
+}
+
+model SaleItem {
+  id         Int      @id @default(autoincrement())
+  quantity   Int
+  unitPrice  Float
+  subtotal   Float
+  saleId     Int
+  medicineId Int
+  sale       Sale     @relation(fields: [saleId], references: [id])
+  medicine   Medicine @relation(fields: [medicineId], references: [id])
+}
+
+model Restock {
+  id          Int      @id @default(autoincrement())
+  quantity    Int
+  costPrice   Float
+  note        String?
+  restockedAt DateTime @default(now())
+  medicineId  Int
+  medicine    Medicine @relation(fields: [medicineId], references: [id])
+}
+
+model Patient {
+  id        Int           @id @default(autoincrement())
+  name      String
+  phone     String?
+  dob       DateTime?
+  gender    String?
+  note      String?
+  createdAt DateTime      @default(now())
+  visits    DentalVisit[]
+}
+
+model DentalVisit {
+  id          Int      @id @default(autoincrement())
+  diagnosis   String?
+  treatment   String?
+  toothNumber String?
+  totalAmount Float
+  currency    Currency @default(USD)
+  paid        Boolean  @default(false)
+  visitedAt   DateTime @default(now())
+  patientId   Int
+  patient     Patient  @relation(fields: [patientId], references: [id])
+}
